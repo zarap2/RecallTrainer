@@ -1,0 +1,708 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Quiz App API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: quizzes
+    description: Quiz management
+  - name: questions
+    description: Question management
+  - name: sessions
+    description: Student quiz sessions
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /quizzes:
+    get:
+      operationId: listQuizzes
+      tags: [quizzes]
+      summary: List all quizzes
+      responses:
+        "200":
+          description: List of quizzes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuizSummary"
+    post:
+      operationId: createQuiz
+      tags: [quizzes]
+      summary: Create a new quiz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizInput"
+      responses:
+        "201":
+          description: Created quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{id}:
+    get:
+      operationId: getQuiz
+      tags: [quizzes]
+      summary: Get a quiz with its questions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz with questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    patch:
+      operationId: updateQuiz
+      tags: [quizzes]
+      summary: Update a quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizUpdate"
+      responses:
+        "200":
+          description: Updated quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteQuiz
+      tags: [quizzes]
+      summary: Delete a quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /quizzes/{id}/questions:
+    post:
+      operationId: addQuestion
+      tags: [questions]
+      summary: Add a question to a quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "201":
+          description: Created question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "404":
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /quizzes/{id}/stats:
+    get:
+      operationId: getQuizStats
+      tags: [quizzes]
+      summary: Get stats for a quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizStats"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /quizzes/{id}/leaderboard:
+    get:
+      operationId: getQuizLeaderboard
+      tags: [quizzes]
+      summary: Get leaderboard for a quiz
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /questions/{id}:
+    patch:
+      operationId: updateQuestion
+      tags: [questions]
+      summary: Update a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionUpdate"
+      responses:
+        "200":
+          description: Updated question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+    delete:
+      operationId: deleteQuestion
+      tags: [questions]
+      summary: Delete a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions:
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Start a quiz session (student begins a quiz)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInput"
+      responses:
+        "201":
+          description: Created session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Quiz not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get session state and answers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session with answers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions/{id}/initial-guess:
+    post:
+      operationId: submitInitialGuess
+      tags: [sessions]
+      summary: Submit initial guess for a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuessInput"
+      responses:
+        "200":
+          description: Answer state after initial guess
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions/{id}/view-hint:
+    post:
+      operationId: viewHint
+      tags: [sessions]
+      summary: View hint for a question (records penalty if no initial guess)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HintRequest"
+      responses:
+        "200":
+          description: Hint text and updated answer state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HintResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions/{id}/final-answer:
+    post:
+      operationId: submitFinalAnswer
+      tags: [sessions]
+      summary: Submit final answer for a question
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FinalAnswerInput"
+      responses:
+        "200":
+          description: Answer result with score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Answer"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /sessions/{id}/complete:
+    post:
+      operationId: completeSession
+      tags: [sessions]
+      summary: Mark session as complete and compute final score
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Completed session with final score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    QuizInput:
+      type: object
+      required: [title, topic]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        topic:
+          type: string
+          minLength: 1
+        description:
+          type: string
+
+    QuizUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        topic:
+          type: string
+        description:
+          type: string
+
+    QuizSummary:
+      type: object
+      required: [id, title, topic, questionCount, sessionCount, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        topic:
+          type: string
+        description:
+          type: ["string", "null"]
+        questionCount:
+          type: integer
+        sessionCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Quiz:
+      type: object
+      required: [id, title, topic, questions, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        topic:
+          type: string
+        description:
+          type: ["string", "null"]
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Question"
+        createdAt:
+          type: string
+          format: date-time
+
+    QuestionInput:
+      type: object
+      required: [text, choices, correctAnswer, hint]
+      properties:
+        text:
+          type: string
+          minLength: 1
+        choices:
+          type: array
+          items:
+            type: string
+          minItems: 2
+        correctAnswer:
+          type: string
+          minLength: 1
+        hint:
+          type: string
+          minLength: 1
+        orderIndex:
+          type: integer
+
+    QuestionUpdate:
+      type: object
+      properties:
+        text:
+          type: string
+        choices:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: string
+        hint:
+          type: string
+        orderIndex:
+          type: integer
+
+    Question:
+      type: object
+      required: [id, quizId, text, choices, correctAnswer, hint, orderIndex, createdAt]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        text:
+          type: string
+        choices:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: string
+        hint:
+          type: string
+        orderIndex:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    SessionInput:
+      type: object
+      required: [quizId, studentName]
+      properties:
+        quizId:
+          type: integer
+        studentName:
+          type: string
+          minLength: 1
+
+    Session:
+      type: object
+      required: [id, quizId, studentName, totalScore, completedAt, startedAt, answers]
+      properties:
+        id:
+          type: integer
+        quizId:
+          type: integer
+        studentName:
+          type: string
+        totalScore:
+          type: number
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Answer"
+
+    Answer:
+      type: object
+      required: [id, sessionId, questionId, hintViewed, penaltyApplied, score]
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        questionId:
+          type: integer
+        initialGuess:
+          type: ["string", "null"]
+        hintViewed:
+          type: boolean
+        finalAnswer:
+          type: ["string", "null"]
+        penaltyApplied:
+          type: boolean
+        score:
+          type: number
+        isCorrect:
+          type: ["boolean", "null"]
+
+    GuessInput:
+      type: object
+      required: [questionId, guess]
+      properties:
+        questionId:
+          type: integer
+        guess:
+          type: string
+
+    HintRequest:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: integer
+
+    HintResponse:
+      type: object
+      required: [hint, answer]
+      properties:
+        hint:
+          type: string
+        answer:
+          $ref: "#/components/schemas/Answer"
+
+    FinalAnswerInput:
+      type: object
+      required: [questionId, answer]
+      properties:
+        questionId:
+          type: integer
+        answer:
+          type: string
+
+    QuizStats:
+      type: object
+      required: [quizId, sessionCount, avgScore, completionRate, avgHintUsage]
+      properties:
+        quizId:
+          type: integer
+        sessionCount:
+          type: integer
+        avgScore:
+          type: number
+        completionRate:
+          type: number
+        avgHintUsage:
+          type: number
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, studentName, totalScore, completedAt]
+      properties:
+        rank:
+          type: integer
+        studentName:
+          type: string
+        totalScore:
+          type: number
+        completedAt:
+          type: string
+          format: date-time
